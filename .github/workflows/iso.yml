@@ -18,7 +18,6 @@ jobs:
     name: Build ISOs
     runs-on: ubuntu-26.04
     environment: ISOs
-    if: github.triggering_actor == 'royaloughtness'
     strategy:
       fail-fast: false
       matrix:

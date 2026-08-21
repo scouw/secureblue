@@ -23,7 +23,6 @@ jobs:
     name: "Build and UKI-sign UKI addons"
     runs-on: "ubuntu-26.04"
     environment: UKIBuild
-    if: github.triggering_actor == 'royaloughtness'
     permissions:
       contents: read # Needed to pull the repo for the build
       packages: write # Needed to publish images
