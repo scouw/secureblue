@@ -73,7 +73,8 @@ def apply_kargs(*, add: Sequence[str], remove: Sequence[str]) -> None:
             rem_kargs_cmd = ":"
 
         run0_cmd = ["/usr/bin/run0", "--via-shell", "eval"]
-        action = f"'{set_kargs_cmd} && {rem_kargs_cmd}'"
+        mkdir_cmd = f"/usr/bin/mkdir -p {loaded_addons_path}"
+        action = f"'{mkdir_cmd} && {set_kargs_cmd} && {rem_kargs_cmd}'"
         print("You must be authorized as an administrator to set/remove kargs.")
         subprocess.run([*run0_cmd, action], check=True)
 
