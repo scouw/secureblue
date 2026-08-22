@@ -67,7 +67,7 @@ def apply_kargs(*, add: Sequence[str], remove: Sequence[str]) -> None:
 
         # Remove kargs
         if remove:
-            rem_addons_path = f"{avail_addons_path}/{{{','.join(rem_addons)}}}"
+            rem_addons_path = f"{loaded_addons_path}/{{{','.join(rem_addons)}}}"
             rem_kargs_cmd = f"/usr/bin/rm -f {rem_addons_path}"
         else:
             rem_kargs_cmd = ":"
