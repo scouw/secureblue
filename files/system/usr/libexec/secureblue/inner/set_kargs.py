@@ -52,15 +52,17 @@ def set_kargs(kargs: Sequence[str]) -> None:
 
     ensure_dir_exists(LOADED_ADDONS_PATH)
 
-    for karg in kargs:
-        subprocess.run(["/usr/bin/cp", AVAIL_ADDONS_PATH + karg, LOADED_ADDONS_PATH], check=True)
+    addons = [addon_from_karg(karg) for karg in kargs]
+    for addon in addons:
+        subprocess.run(["/usr/bin/cp", AVAIL_ADDONS_PATH + addon, LOADED_ADDONS_PATH], check=True)
 
 
 def remove_kargs(kargs: Sequence[str]) -> None:
     """Removes kargs by unloading UKI addons. Silently ignores kargs which don't exist."""
 
-    for karg in kargs:
-        subprocess.run(["/usr/bin/rm", "-f", LOADED_ADDONS_PATH + karg], check=True)
+    addons = [addon_from_karg(karg) for karg in kargs]
+    for addon in addons:
+        subprocess.run(["/usr/bin/rm", "-f", LOADED_ADDONS_PATH + addon], check=True)
 
 
 def get_avail_kargs() -> set[str]:
