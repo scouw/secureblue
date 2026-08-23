@@ -6,12 +6,15 @@
 
 """Common data for kernel argument hardening."""
 
-import os
+import dataclasses
+import json
 import subprocess
 import sys
 import tomllib
 from collections.abc import Sequence
+from dataclasses import dataclass
 
+import sandbox
 from utils import BootcBackend
 
 from shared.secure_boot import Bootloader
@@ -40,44 +43,49 @@ UNSTABLE_KARGS = [
 ]
 
 
+@dataclass
+class ModifyKargs:
+    add: list[str]
+    remove: list[str]
+
+
+def serialize(request: ModifyKargs) -> str:
+    """Serialises a data object to be passed to the inner function."""
+
+    return json.dumps(dataclasses.asdict(request))
+
+
+def deserialize(request: str) -> ModifyKargs:
+    """Deserialises a data object passed to the inner function.
+
+    Raises:
+        TypeError: Unexpected fields for action.
+    """
+
+    data = json.loads(request)
+
+    # TypeError if there are unexpected or missing fields.
+    return ModifyKargs(**data)
+
+
 def apply_kargs(*, add: Sequence[str], remove: Sequence[str]) -> None:
     """Add and remove kernel arguments. Ignores remove kargs if not set."""
     bootc_backend = BootcBackend.from_running()
     bootloader = Bootloader.from_running()
 
     if bootc_backend == BootcBackend.COMPOSEFS and bootloader == Bootloader.SYSTEMD_BOOT:
-        avail_addons_path = "/usr/share/secureblue/uki/addons"
-        loaded_addons_path = "/boot/loader/addons"
+        worker = sandbox.SandboxedFunction(
+            "set_kargs.py",
+            read_write_paths=["/boot/loader/addons/"],
+        )
 
-        addon_suffix = ".addon.efi"
-        set_addons = [karg.replace("=", "__") + addon_suffix for karg in add]
-        rem_addons = [karg.replace("=", "__") + addon_suffix for karg in remove]
+        request = ModifyKargs(list(add), list(remove))
+        exit_code = worker.run(stdin=serialize(request))
 
-        avail_addons = os.listdir(path=avail_addons_path)
-        unavail_addons = [addon for addon in set_addons if addon not in avail_addons]
-        if unavail_addons:
-            print(f"No such addon(s): {', '.join(unavail_addons)}")
-            sys.exit(1)
+        if exit_code:
+            print(f"Worker failed (exit {exit_code})", file=sys.stderr)
 
-        # Set kargs
-        if add:
-            set_addons_path = f"{avail_addons_path}/{{{','.join(set_addons)}}}"
-            set_kargs_cmd = f"/usr/bin/cp {set_addons_path} {loaded_addons_path}"
-        else:
-            set_kargs_cmd = ":"
-
-        # Remove kargs
-        if remove:
-            rem_addons_path = f"{loaded_addons_path}/{{{','.join(rem_addons)}}}"
-            rem_kargs_cmd = f"/usr/bin/rm -f {rem_addons_path}"
-        else:
-            rem_kargs_cmd = ":"
-
-        run0_cmd = ["/usr/bin/run0", "--via-shell", "eval"]
-        mkdir_cmd = f"/usr/bin/mkdir -p {loaded_addons_path}"
-        action = f"'{mkdir_cmd} && {set_kargs_cmd} && {rem_kargs_cmd}'"
-        print("You must be authorized as an administrator to set/remove kargs.")
-        subprocess.run([*run0_cmd, action], check=True)
+        sys.exit(exit_code)
 
     elif bootc_backend == BootcBackend.OSTREE and bootloader == Bootloader.GRUB2:
         rpm_ostree_cmd = ["/usr/bin/rpm-ostree", "kargs"]
