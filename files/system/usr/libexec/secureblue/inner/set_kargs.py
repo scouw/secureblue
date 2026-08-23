@@ -99,7 +99,7 @@ def main() -> int:
     if kargs_not_loaded:
         print(f"The following kargs couldn't be loaded: {', '.join(kargs_not_loaded)}")
 
-    kargs_not_removed = set(request.remove) - loaded_kargs
+    kargs_not_removed = set(request.remove) & loaded_kargs
     if kargs_not_removed:
         print(f"The following kargs couldn't be removed: {', '.join(kargs_not_removed)}")
         return 1
