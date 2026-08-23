@@ -6,17 +6,17 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import os
 import subprocess
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 
 from shared.kargs import (
     deserialize,
 )
 
-LOADED_ADDONS_PATH = "/boot/loader/addons/"
-AVAIL_ADDONS_PATH = "/usr/share/secureblue/uki/addons/"
+LOADED_ADDONS_PATH = Path("/boot/loader/addons/")
+AVAIL_ADDONS_PATH = Path("/usr/share/secureblue/uki/addons/")
 ADDON_SUFFIX = ".addon.efi"
 
 
@@ -41,10 +41,10 @@ def addon_from_karg(karg: str) -> str:
     return addon + ADDON_SUFFIX
 
 
-def ensure_dir_exists(directory: str) -> None:
+def ensure_dir_exists(directory: Path) -> None:
     """Creates the requested directory if it doesn't exist."""
 
-    subprocess.run(["/usr/bin/mkdir", "-p", directory], check=True)
+    directory.mkdir(exist_ok=True)
 
 
 def set_kargs(kargs: Sequence[str]) -> None:
@@ -54,7 +54,8 @@ def set_kargs(kargs: Sequence[str]) -> None:
 
     addons = [addon_from_karg(karg) for karg in kargs]
     for addon in addons:
-        subprocess.run(["/usr/bin/cp", AVAIL_ADDONS_PATH + addon, LOADED_ADDONS_PATH], check=True)
+        (AVAIL_ADDONS_PATH / addon).copy_into(LOADED_ADDONS_PATH)
+        subprocess.run(["/usr/bin/cp", AVAIL_ADDONS_PATH / addon, LOADED_ADDONS_PATH], check=True)
 
 
 def remove_kargs(kargs: Sequence[str]) -> None:
@@ -62,20 +63,24 @@ def remove_kargs(kargs: Sequence[str]) -> None:
 
     addons = [addon_from_karg(karg) for karg in kargs]
     for addon in addons:
-        subprocess.run(["/usr/bin/rm", "-f", LOADED_ADDONS_PATH + addon], check=True)
+        (LOADED_ADDONS_PATH / addon).unlink(missing_ok=True)
 
 
 def get_avail_kargs() -> set[str]:
     """Returns a set of all available kargs."""
 
-    avail_kargs = [karg_from_addon(addon) for addon in os.listdir(AVAIL_ADDONS_PATH)]
+    avail_kargs = [
+        karg_from_addon(addon.name) for addon in AVAIL_ADDONS_PATH.glob("*" + ADDON_SUFFIX)
+    ]
     return set(avail_kargs)
 
 
 def get_loaded_kargs() -> set[str]:
     """Returns a set of the currently loaded kargs."""
 
-    loaded_kargs = [karg_from_addon(addon) for addon in os.listdir(LOADED_ADDONS_PATH)]
+    loaded_kargs = [
+        karg_from_addon(addon.name) for addon in LOADED_ADDONS_PATH.glob("*" + ADDON_SUFFIX)
+    ]
     return set(loaded_kargs)
 
 
