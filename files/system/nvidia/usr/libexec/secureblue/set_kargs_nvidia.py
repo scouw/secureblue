@@ -10,12 +10,12 @@ import sys
 from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
-    from files.system.usr.libexec.secureblue import kargs_hardening_common
+    from files.system.usr.libexec.secureblue.shared import kargs
 else:
-    import kargs_hardening_common
+    import kargs
 
-IMAGE_NVIDIA_KARGS: Final = kargs_hardening_common.IMAGE_NVIDIA_KARGS
-apply_kargs: Final = kargs_hardening_common.apply_kargs
+IMAGE_NVIDIA_KARGS: Final = kargs.IMAGE_NVIDIA_KARGS
+apply_kargs: Final = kargs.apply_kargs
 
 
 def main() -> int:

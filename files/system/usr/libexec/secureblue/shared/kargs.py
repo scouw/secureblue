@@ -12,8 +12,9 @@ import sys
 import tomllib
 from collections.abc import Sequence
 
-from shared.secure_boot import Bootloader
 from utils import BootcBackend
+
+from shared.secure_boot import Bootloader
 
 with open("/usr/lib/bootc/kargs.d/10-secureblue.toml", "rb") as f:
     DEFAULT_KARGS = tomllib.load(f)["kargs"]
