@@ -6,7 +6,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import subprocess
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -55,7 +54,6 @@ def set_kargs(kargs: Sequence[str]) -> None:
     addons = [addon_from_karg(karg) for karg in kargs]
     for addon in addons:
         (AVAIL_ADDONS_PATH / addon).copy_into(LOADED_ADDONS_PATH)
-        subprocess.run(["/usr/bin/cp", AVAIL_ADDONS_PATH / addon, LOADED_ADDONS_PATH], check=True)
 
 
 def remove_kargs(kargs: Sequence[str]) -> None:
